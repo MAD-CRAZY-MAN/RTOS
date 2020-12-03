@@ -66,33 +66,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_PIN)
 		Uart_Printf("EXTI-1 interrupt \r\n");
 	}
 }
-
+int tick = 0;
 void TASK_A(void *p)
 {
-	int start = 0;
-	int tick = 0;
-	xSemaphore = xSemaphoreCreateBinary();
-	xSemaphore2= xSemaphoreCreateBinary();
 	while(1)
 	{
 		uint32_t a0, a1, a2, a3;
-		if(	xSemaphoreTake(xSemaphore, 0) == pdTRUE)
-		{
-			start = start ^ 1;
-		}
-		if(xSemaphoreTake(xSemaphore2, 0) == pdTRUE)
-		{
-			tick = 0;
-		}
-		if(start)
-		{
-			tick = tick + 1;
-		}
-				
-		a3 = (tick / 10) % 10;
-		a2 = (tick / 100) % 10;
-		a1 = (tick / 1000) % 10;
-		a0 = (tick / 10000) % 10;
+						
+		a3 = (tick / 1) % 10;
+		a2 = (tick / 10) % 10;
+		a1 = (tick / 100) % 10;
+		a0 = (tick / 1000) % 10;
 		
 		display_number(0, a0);
 		vTaskDelay(5);
@@ -108,42 +92,33 @@ void TASK_A(void *p)
 	}
 }
 
-/*
-void TASK_A(void *p)
-{
-	unsigned int n = 0;
-	while(1)
-	{
-		//xSemaphoreTake(xSemaphoreUart, portMAX_DELAY);
-		Uart_Printf("The Current Tick: %d \r\n", n);
-		n = n + 1;
-		vTaskDelay(1000);
-		//xSemaphoreGive(xSemaphoreUart);
-	}
-}
+
 
 void TASK_B(void *p)
 {
-	char *c = "Hello World!!!\r\n";
-	unsigned int k = 0;
+	int start = 0;
+	xSemaphore = xSemaphoreCreateBinary();
+	xSemaphore2= xSemaphoreCreateBinary();
 	while(1)
 	{
-		//xSemaphoreTake(xSemaphoreUart, portMAX_DELAY);
-		k=0;
-		while(c[k])
+		if(	xSemaphoreTake(xSemaphore, 100) == pdTRUE)
 		{
-			Uart_Printf("%c", c[k]);
-			k = k+1;
-			vTaskDelay(20);
+			start = start ^ 1;
 		}
-		vTaskDelay(1000);
-			//xSemaphoreGive(xSemaphoreUart);
+		if(xSemaphoreTake(xSemaphore2, 0) == pdTRUE)
+		{
+			tick = 0;
+		}
+		if(start)
+		{
+			tick = tick + 1;
+		}
 		
-	}
-	
+		//vTaskDelay(1000);
+	}	
 	
 }
-
+/*
 void TASK_C(void *p)
 {
 	char *c = "vTask_C is now executing. \r\n";
@@ -161,8 +136,8 @@ void TASK_C(void *p)
 		}
 		vTaskDelay(1000);
 	}
-}
-	*/	
+}*/
+	
 /*
 void vTaskCode(void * pvParameters)
 {
@@ -295,14 +270,14 @@ void start_freertos_testing(void)
 								NULL,    
 								tskIDLE_PRIORITY,
                 &xTaskA );
-/*
+
 	xTaskCreate(TASK_B,
 								"TASK_B",       
 								configMINIMAL_STACK_SIZE, 
 								NULL,    
 								tskIDLE_PRIORITY,
-                &xTaskB );	
-
+                 NULL);	
+/*
   xTaskCreate(TASK_C,
 								"TASK_C",       
 								configMINIMAL_STACK_SIZE, 
