@@ -46,12 +46,17 @@ int gA, gB;
 SemaphoreHandle_t xSemaphore;
 SemaphoreHandle_t xSemaphore2;
 TaskHandle_t xTaskB;
+/*
+void TimerCallbackFunc1(TimerHandle_t xTimerHandle)
+{
+	led_toggle(0);
+}
 
-void TimerCallbackFunc(TimerHandle_t xTimerHandle)
+void TimerCallbackFunc2(TimerHandle_t xTimerHandle)
 {
 	led_toggle(1);
 }
-/*
+*/
 typedef struct Message
 {
 	uint32_t tick;
@@ -62,47 +67,39 @@ QueueHandle_t xQueue;
 
 void queue_init()
 {
-	xQueue = xQueueCreate(8, sizeof(message_t));
-}*/
-/*
+	xQueue = xQueueCreate(8, sizeof(int));
+}
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_PIN)
 {
-	if(GPIO_PIN == GPIO_PIN_0)
+	uint32_t message = 1;
+	BaseType_t xHigherPriorityTaskWoken=pdFALSE;
+	xQueueSendFromISR(xQueue, &message, &xHigherPriorityTaskWoken);
+	message++;
+	if(xHigherPriorityTaskWoken)
 	{
-		eTaskState state = eTaskGetState(xTaskA);
-		Uart_Printf("%d \r\n", state);
-		
-		xSemaphoreGiveFromISR(xSemaphore, NULL);
-		
-		state = eTaskGetState(xTaskA);
-		Uart_Printf("%d \r\n", state);
-		
-		Uart_Printf("EXTI-0 interrupt \r\n");
+		taskYIELD();
 	}
-	else if (GPIO_PIN == GPIO_PIN_1)
-	{
-		xSemaphoreGiveFromISR(xSemaphore2, NULL);
-		Uart_Printf("EXTI-1 interrupt \r\n");
-	}
-}*/
+}
 
 void TASK_A(void *p)
 {
 	for(;;)
 	{
-		vTaskDelay((uint32_t)-1);
+		__NOP();
 	}
 }
-/*
+
 void TASK_B(void *p)
 {
-	
+	uint32_t msg;
 	for(;;)
 	{
-		uint32_t count = ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
-		Uart_Printf("count: %d\r\n", count);
+		xQueueReceive(xQueue, &msg, (uint32_t)-1);
+		Uart_Printf("%d\r\n", msg);
+		__NOP();
 	}
-}*/
+}
 
 
 
@@ -111,20 +108,29 @@ void start_freertos_testing(void)
 	xSemaphoreUart = xSemaphoreCreateBinary();
 	xSemaphoreGive(xSemaphoreUart);
 	*/
-	//queue_init();
-	unsigned int timer_id = 0;
-	TimerHandle_t handle = xTimerCreate("TIMER_FUC_0",
+	queue_init();
+	/*
+	unsigned int timer_id = 1;
+	TimerHandle_t handle1 = xTimerCreate("TIMER_FUC_0",
+																			100,
+																			pdTRUE,
+																			(void *)timer_id,
+																			TimerCallbackFunc1);
+	xTimerStart(handle1, timer_id);
+	timer_id =2;
+
+	TimerHandle_t handle2 = xTimerCreate("TIMER_FUC_1",
 																			1000,
 																			pdTRUE,
 																			(void *)timer_id,
-																			TimerCallbackFunc);
-xTimerStart(handle, timer_id);																			
-																								
-	/*	  xTaskCreate(TASK_A,
+																			TimerCallbackFunc2);
+	xTimerStart(handle2, timer_id);																			
+		*/																						
+	xTaskCreate(TASK_A,
 								"TASK_A",       
 								configMINIMAL_STACK_SIZE, 
 								NULL,    
-								tskIDLE_PRIORITY,
+								tskIDLE_PRIORITY+1,
                 NULL );
 
 	xTaskCreate(TASK_B,
@@ -133,7 +139,7 @@ xTimerStart(handle, timer_id);
 								NULL,    
 								tskIDLE_PRIORITY+1,
                  &xTaskB);	
-
+/*
   xTaskCreate(TASK_C,
 								"TASK_C",       
 								configMINIMAL_STACK_SIZE, 
