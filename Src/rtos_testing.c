@@ -8,6 +8,7 @@
 #include "uart.h"
 #include "stm32f10x.h"
 #include "semphr.h"
+#include "timers.h"
 /*
 *
 */
@@ -46,6 +47,11 @@ SemaphoreHandle_t xSemaphore;
 SemaphoreHandle_t xSemaphore2;
 TaskHandle_t xTaskB;
 
+void TimerCallbackFunc(TimerHandle_t xTimerHandle)
+{
+	led_toggle(1);
+}
+/*
 typedef struct Message
 {
 	uint32_t tick;
@@ -57,7 +63,7 @@ QueueHandle_t xQueue;
 void queue_init()
 {
 	xQueue = xQueueCreate(8, sizeof(message_t));
-}
+}*/
 /*
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_PIN)
 {
@@ -84,21 +90,10 @@ void TASK_A(void *p)
 {
 	for(;;)
 	{
-		if(is_key_pressed(KEY_CENTER))
-		{
-			xTaskNotifyGive(xTaskB);
-			Uart_Printf("a\r\n");
-			xTaskNotifyGive(xTaskB);
-			Uart_Printf("b\r\n");
-			xTaskNotifyGive(xTaskB);
-			Uart_Printf("c\r\n");
-			xTaskNotifyGive(xTaskB);
-			Uart_Printf("d\r\n");
-		}
-		vTaskDelay(100);
+		vTaskDelay((uint32_t)-1);
 	}
 }
-
+/*
 void TASK_B(void *p)
 {
 	
@@ -107,7 +102,7 @@ void TASK_B(void *p)
 		uint32_t count = ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
 		Uart_Printf("count: %d\r\n", count);
 	}
-}
+}*/
 /*
 void TASK_C(void *p)
 {
@@ -253,8 +248,16 @@ void start_freertos_testing(void)
 	xSemaphoreUart = xSemaphoreCreateBinary();
 	xSemaphoreGive(xSemaphoreUart);
 	*/
-	queue_init();
-	  xTaskCreate(TASK_A,
+	//queue_init();
+	unsigned int timer_id = 0;
+	TimerHandle_t handle = xTimerCreate("TIMER_FUC_0",
+																			1000,
+																			pdTRUE,
+																			(void *)timer_id,
+																			TimerCallbackFunc);
+xTimerStart(handle, timer_id);																			
+																								
+	/*	  xTaskCreate(TASK_A,
 								"TASK_A",       
 								configMINIMAL_STACK_SIZE, 
 								NULL,    
@@ -267,7 +270,7 @@ void start_freertos_testing(void)
 								NULL,    
 								tskIDLE_PRIORITY+1,
                  &xTaskB);	
-/*
+
   xTaskCreate(TASK_C,
 								"TASK_C",       
 								configMINIMAL_STACK_SIZE, 

@@ -53,6 +53,13 @@
 #define configUSE_16_BIT_TICKS		0
 #define configIDLE_SHOULD_YIELD		1
 
+#define configUSE_TIMERS    1
+#define configSUPPORT_DYNAMIC_ALLOCATION    1
+#define configTIMER_TASK_PRIORITY		2
+#define configTIMER_QUEUE_LENGTH   10
+#define configTIMER_TASK_STACK_DEPTH    configMINIMAL_STACK_SIZE
+
+
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES 		0
 #define configMAX_CO_ROUTINE_PRIORITIES ( 2 )

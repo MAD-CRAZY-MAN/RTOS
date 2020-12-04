@@ -28,6 +28,7 @@
 "stm32-entry\list.o"
 "stm32-entry\queue.o"
 "stm32-entry\tasks.o"
+"stm32-entry\timers.o"
 "stm32-entry\heap_1.o"
 "stm32-entry\port.o"
 --library_type=microlib --strict --scatter "STM32-Entry\STM32-Entry.sct"

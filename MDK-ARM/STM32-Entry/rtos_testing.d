@@ -24,3 +24,4 @@ stm32-entry\rtos_testing.o: ../Drivers/CMSIS/Include/core_cmFunc.h
 stm32-entry\rtos_testing.o: C:\Keil_v5\ARM\PACK\Keil\STM32F1xx_DFP\2.3.0\Device\Include\system_stm32f10x.h
 stm32-entry\rtos_testing.o: ..\FreeRTOS\Source\include\semphr.h
 stm32-entry\rtos_testing.o: ..\FreeRTOS\Source\include\queue.h
+stm32-entry\rtos_testing.o: ..\FreeRTOS\Source\include\timers.h
