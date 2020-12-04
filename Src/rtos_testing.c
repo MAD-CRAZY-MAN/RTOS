@@ -46,6 +46,19 @@ SemaphoreHandle_t xSemaphore;
 SemaphoreHandle_t xSemaphore2;
 TaskHandle_t xTaskA;
 
+typedef struct Message
+{
+	uint32_t tick;
+	uint32_t value;
+}message_t;
+
+QueueHandle_t xQueue;
+
+void queue_init()
+{
+	xQueue = xQueueCreate(8, sizeof(message_t));
+}
+/*
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_PIN)
 {
 	if(GPIO_PIN == GPIO_PIN_0)
@@ -65,58 +78,31 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_PIN)
 		xSemaphoreGiveFromISR(xSemaphore2, NULL);
 		Uart_Printf("EXTI-1 interrupt \r\n");
 	}
-}
-int tick = 0;
+}*/
+
 void TASK_A(void *p)
 {
-	while(1)
+	message_t message;
+	for(;;)
 	{
-		uint32_t a0, a1, a2, a3;
-						
-		a3 = (tick / 1) % 10;
-		a2 = (tick / 10) % 10;
-		a1 = (tick / 100) % 10;
-		a0 = (tick / 1000) % 10;
-		
-		display_number(0, a0);
-		vTaskDelay(5);
-		
-		display_number(1, a1);
-		vTaskDelay(5);
-		
-		display_number(2, a2);
-		vTaskDelay(5);
-
-		display_number(3, a3);
-		vTaskDelay(5);
+		message.tick = xTaskGetTickCount();
+		message.value = get_cds_value();
+		xQueueSend(xQueue, (void*)&message, portMAX_DELAY);
+		vTaskDelay(1000);
 	}
 }
 
-
-
 void TASK_B(void *p)
 {
-	int start = 0;
-	xSemaphore = xSemaphoreCreateBinary();
-	xSemaphore2= xSemaphoreCreateBinary();
-	while(1)
+	message_t message;
+	for(;;)
 	{
-		if(	xSemaphoreTake(xSemaphore, 100) == pdTRUE)
-		{
-			start = start ^ 1;
-		}
-		if(xSemaphoreTake(xSemaphore2, 0) == pdTRUE)
-		{
-			tick = 0;
-		}
-		if(start)
-		{
-			tick = tick + 1;
-		}
-		
-		//vTaskDelay(1000);
-	}	
-	
+		xQueueReceive(xQueue, (void *)&message, portMAX_DELAY);
+		led_on(LED_0);
+		Uart_Printf("tick: %d\r\n", message.tick);
+		Uart_Printf("value: %d\r\n", message.value);
+		led_off(LED_0);
+	}
 }
 /*
 void TASK_C(void *p)
@@ -263,7 +249,7 @@ void start_freertos_testing(void)
 	xSemaphoreUart = xSemaphoreCreateBinary();
 	xSemaphoreGive(xSemaphoreUart);
 	*/
-	
+	queue_init();
 	  xTaskCreate(TASK_A,
 								"TASK_A",       
 								configMINIMAL_STACK_SIZE, 
