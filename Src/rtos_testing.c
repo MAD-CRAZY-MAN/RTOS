@@ -44,7 +44,7 @@ int gA, gB;
 
 SemaphoreHandle_t xSemaphore;
 SemaphoreHandle_t xSemaphore2;
-TaskHandle_t xTaskA;
+TaskHandle_t xTaskB;
 
 typedef struct Message
 {
@@ -82,26 +82,30 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_PIN)
 
 void TASK_A(void *p)
 {
-	message_t message;
 	for(;;)
 	{
-		message.tick = xTaskGetTickCount();
-		message.value = get_cds_value();
-		xQueueSend(xQueue, (void*)&message, portMAX_DELAY);
-		vTaskDelay(1000);
+		if(is_key_pressed(KEY_CENTER))
+		{
+			xTaskNotifyGive(xTaskB);
+			Uart_Printf("a\r\n");
+			xTaskNotifyGive(xTaskB);
+			Uart_Printf("b\r\n");
+			xTaskNotifyGive(xTaskB);
+			Uart_Printf("c\r\n");
+			xTaskNotifyGive(xTaskB);
+			Uart_Printf("d\r\n");
+		}
+		vTaskDelay(100);
 	}
 }
 
 void TASK_B(void *p)
 {
-	message_t message;
+	
 	for(;;)
 	{
-		xQueueReceive(xQueue, (void *)&message, portMAX_DELAY);
-		led_on(LED_0);
-		Uart_Printf("tick: %d\r\n", message.tick);
-		Uart_Printf("value: %d\r\n", message.value);
-		led_off(LED_0);
+		uint32_t count = ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
+		Uart_Printf("count: %d\r\n", count);
 	}
 }
 /*
@@ -255,14 +259,14 @@ void start_freertos_testing(void)
 								configMINIMAL_STACK_SIZE, 
 								NULL,    
 								tskIDLE_PRIORITY,
-                &xTaskA );
+                NULL );
 
 	xTaskCreate(TASK_B,
 								"TASK_B",       
 								configMINIMAL_STACK_SIZE, 
 								NULL,    
-								tskIDLE_PRIORITY,
-                 NULL);	
+								tskIDLE_PRIORITY+1,
+                 &xTaskB);	
 /*
   xTaskCreate(TASK_C,
 								"TASK_C",       
